@@ -1,0 +1,32 @@
+{
+  "protocol": "ASM-v0.2",
+  "status": "debug-frozen-before-frontier-confirmatory-run",
+  "debug": {
+    "blocks": 9,
+    "block_size": 8,
+    "seeds": [7]
+  },
+  "confirmatory_candidate": {
+    "blocks": 12,
+    "block_size": 12,
+    "seeds": [7, 19, 31],
+    "model_families_min": 2
+  },
+  "controller": {
+    "modes": ["baseline", "cautious", "exploratory"],
+    "transform_probability": 0.8,
+    "first_block": "baseline"
+  },
+  "primary_endpoints": [
+    "shift_balanced_accuracy",
+    "false_shift_rate",
+    "mean_probe_brier",
+    "direction_accuracy_on_shifted"
+  ],
+  "manipulation_checks": [
+    "baseline_cautious_action_rate",
+    "cautious_mode_cautious_action_rate",
+    "exploratory_mode_cautious_action_rate",
+    "controller_transform_rate"
+  ]
+}
