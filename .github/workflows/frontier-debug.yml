@@ -1,0 +1,99 @@
+name: frontier-debug
+
+on:
+  workflow_dispatch:
+    inputs:
+      acknowledge_budget:
+        description: "Type AUTHORIZE_5_USD to acknowledge a maximum $5 API budget for this debug run"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  authorize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify budget acknowledgement
+        shell: bash
+        run: |
+          if [ "${{ inputs.acknowledge_budget }}" != "AUTHORIZE_5_USD" ]; then
+            echo "Budget acknowledgement did not match. No model calls will run."
+            exit 1
+          fi
+
+  debug:
+    needs: authorize
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - provider: openai
+            model: gpt-5.6-sol
+          - provider: anthropic
+            model: claude-fable-5-1
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify required secret exists
+        shell: bash
+        run: |
+          if [ "${{ matrix.provider }}" = "openai" ] && [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY is not configured."
+            exit 1
+          fi
+          if [ "${{ matrix.provider }}" = "anthropic" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ANTHROPIC_API_KEY is not configured."
+            exit 1
+          fi
+
+      - name: Install
+        run: pip install -e ".[openai,anthropic]"
+
+      - name: Record environment
+        shell: bash
+        run: |
+          python --version
+          python - <<'PY'
+          from importlib.metadata import version
+          for package in ("openai", "anthropic"):
+              try:
+                  print(f"{package}=={version(package)}")
+              except Exception:
+                  pass
+          PY
+
+      - name: Run preregistered frontier debug
+        shell: bash
+        run: |
+          python -m asm_v0.cli \
+            --protocol v0.2 \
+            --provider "${{ matrix.provider }}" \
+            --model "${{ matrix.model }}" \
+            --blocks 3 \
+            --block-size 4 \
+            --seed 7 \
+            --out "runs/debug-${{ matrix.provider }}"
+
+      - name: Analyze
+        shell: bash
+        run: |
+          python -m asm_v0.analysis runs/debug-${{ matrix.provider }}/*.jsonl | tee "runs/debug-${{ matrix.provider }}/analysis.txt"
+
+      - name: Upload run records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asm-v0-2-debug-${{ matrix.provider }}-${{ github.run_id }}
+          path: runs/debug-${{ matrix.provider }}/
+          if-no-files-found: warn
+          retention-days: 90
