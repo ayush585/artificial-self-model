@@ -78,15 +78,24 @@ The hard manipulation gate is based on the evaluator-only intended→executed ca
 
 ## Hypotheses
 
-**H1.** B2_SELF will have higher shift balanced accuracy than B0_BASE.
+**H1 (primary architectural contrast).** B2_SELF will have higher shift balanced accuracy than B1_MEMORY. This isolates the contribution of an explicit persistent self-model because both conditions receive the same episodic behavioral memory.
 
-**H2.** B2_SELF will have lower probe Brier score than B0_BASE.
+**H2 (primary calibration contrast).** B2_SELF will have lower probe Brier score than B1_MEMORY.
 
-**H3.** B2_SELF and B1_MEMORY will have lower false-shift rates than a prompt-only system that over-reports change; B2_SELF is expected to outperform B1_MEMORY if an explicit self-model adds information beyond behavioral memory.
+**H3 (negative-control contrast).** B1_MEMORY and B2_SELF are expected to outperform B0_BASE on shift detection because B0 has no episodic behavioral history available at probe time. B0 is therefore a negative-information control, not the primary test of the self-model intervention.
 
-**H4.** On shifted blocks, B2_SELF will classify direction above chance once the manipulation is behaviorally strong enough.
+**H4.** On shifted blocks, B2_SELF will classify direction above chance once the manipulation is behaviorally strong enough; B2_SELF should exceed B1_MEMORY if the explicit self-model adds information beyond memory alone.
 
 These hypotheses are falsified if the predicted condition ordering is absent or reverses under adequate power and a successful manipulation check.
+
+## Inference-setting control
+
+Inference settings are held fixed within each model family for all architecture conditions and seeds. Cross-family absolute scores are not treated as directly comparable because providers expose different reasoning systems. The preregistered debug settings are:
+
+- OpenAI GPT-5.6 Sol: `reasoning.effort=low`, standard Responses API mode, short structured output;
+- Anthropic Claude Fable 5.1: `output_config.effort=low`; adaptive thinking remains on because Fable does not support disabling it.
+
+The primary replication criterion is the **within-family B2_SELF vs B1_MEMORY contrast** having the same qualitative direction across independent model families. Provider reasoning settings must not be changed after the confirmatory freeze.
 
 ## Exclusions
 
